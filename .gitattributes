@@ -1,0 +1,9 @@
+# Make GitHub Linguist count this repo as JavaScript (not TypeScript)
+*.ts linguist-language=JavaScript
+*.tsx linguist-language=JavaScript
+
+# Do not include dependencies or generated files in language stats
+node_modules/** linguist-vendored
+.expo/** linguist-vendored
+dist/** linguist-generated
+build/** linguist-generated

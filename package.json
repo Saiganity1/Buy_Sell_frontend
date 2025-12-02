@@ -2,7 +2,7 @@
   "name": "buy-and-sell-mobile",
   "version": "1.0.0",
   "private": true,
-  "main": "index.js",
+  "main": "App.js",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -17,7 +17,7 @@
     "@react-navigation/native-stack": "^6.9.20",
     "axios": "^1.7.7",
     "base-64": "^1.0.0",
-    "expo": "~51.0.14",
+  "expo": "~51.0.17",
     "expo-image-picker": "~15.1.0",
     "expo-status-bar": "~1.12.1",
     "react": "18.2.0",

@@ -43,10 +43,17 @@ export default function SellScreen() {
           const file = new File([blob], 'photo.jpg', { type: blob.type || 'image/jpeg' });
           form.append('image', file);
         } else {
-          form.append('image', { uri: imageUri, name: 'photo.jpg', type: 'image/jpeg' });
+          // On Android, ensure we send a valid name and mime type to avoid Network Error
+          const name = (() => {
+            try { const idx = imageUri.lastIndexOf('/'); return idx >= 0 ? imageUri.substring(idx + 1) : 'photo.jpg'; } catch { return 'photo.jpg'; }
+          })();
+          const lower = name.toLowerCase();
+          const type = lower.endsWith('.png') ? 'image/png' : lower.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+          form.append('image', { uri: imageUri, name, type });
         }
-        const headers = Platform.OS === 'web' ? { 'Content-Type': 'multipart/form-data' } : undefined;
-        const resp = await api.post('/products/', form, headers ? { headers } : undefined);
+        // Do NOT set Content-Type on native; let axios/RN set the boundary automatically
+        const opts = Platform.OS === 'web' ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined;
+        const resp = await api.post('/products/', form, opts);
         data = resp.data;
       } else {
         const payload = { title, price, description, has_variants: hasVariants };
@@ -63,7 +70,11 @@ export default function SellScreen() {
       setHasVariants(false); setStock('0'); setVariants([]);
     } catch (e) {
       const status = e?.response?.status;
-      const msg = e?.response?.data ? JSON.stringify(e.response.data) : e?.message;
+      const msg = e?.response?.data ? JSON.stringify(e.response.data) : (e?.message || 'Unknown error');
+      // Common hint for Android Snack/Expo Go network errors
+      if ((msg + '').includes('Network Error')) {
+        console.warn('Network Error while posting. Verify API base URL and LAN reachability.');
+      }
       console.warn('Create product failed', status, msg);
       Alert.alert('Failed to post', `Status: ${status ?? 'N/A'}\n${msg ?? 'Unknown error'}`);
     }

@@ -98,6 +98,8 @@ export default function ProductDetailScreen({ route, navigation }) {
   };
 
   const imgUri = resolveImageUri(product);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState(null);
 
   const openImageInBrowser = async () => {
     if (!imgUri) return Alert.alert('No image URL available');
@@ -110,15 +112,56 @@ export default function ProductDetailScreen({ route, navigation }) {
     }
   };
 
+  const testImageFetch = async () => {
+    if (!imgUri) return Alert.alert('No image URL available');
+    try {
+      setImageError(null);
+      setImageLoading(true);
+      const resp = await fetch(imgUri);
+      const ok = resp.ok;
+      const status = resp.status;
+      const ctype = resp.headers.get('content-type');
+      setImageLoading(false);
+      Alert.alert('Image fetch', `ok: ${ok}\nstatus: ${status}\ncontent-type: ${ctype}`);
+    } catch (e) {
+      setImageLoading(false);
+      setImageError(String(e?.message || e));
+      Alert.alert('Image fetch failed', String(e?.message || e));
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
       {imgUri ? (
         <TouchableOpacity onPress={openImageInBrowser} activeOpacity={0.8}>
-          <Image source={{ uri: imgUri }} style={styles.image} />
+          <Image
+            source={{ uri: imgUri }}
+            style={styles.image}
+            onLoadStart={() => { setImageLoading(true); setImageError(null); }}
+            onLoad={() => { setImageLoading(false); setImageError(null); }}
+            onError={(e) => { setImageLoading(false); setImageError(String(e?.nativeEvent?.error || 'failed to load')); }}
+          />
         </TouchableOpacity>
       ) : (
         <View style={[styles.image, styles.placeholder]} />
       )}
+
+      {/* Debug: show resolved image URL and allow quick tests */}
+      {imgUri ? (
+        <View style={{ marginTop: 8 }}>
+          <Text style={{ color: '#666', fontSize: 12 }}>Image URL:</Text>
+          <Text selectable style={{ color: '#1877F2', fontSize: 12 }}>{imgUri}</Text>
+          <View style={{ flexDirection: 'row', marginTop: 8 }}>
+            <TouchableOpacity style={[styles.button, { paddingVertical: 8, paddingHorizontal: 12, marginRight: 8 }]} onPress={openImageInBrowser}>
+              <Text style={styles.buttonText}>Open image</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, { paddingVertical: 8, paddingHorizontal: 12 }]} onPress={testImageFetch}>
+              {imageLoading ? <Text style={styles.buttonText}>Checking…</Text> : <Text style={styles.buttonText}>Test fetch</Text>}
+            </TouchableOpacity>
+          </View>
+          {imageError ? <Text style={{ color: 'red', marginTop: 6 }}>Error: {String(imageError)}</Text> : null}
+        </View>
+      ) : null}
       <Text style={styles.title}>{product?.title}</Text>
       <Text style={styles.price}>{formatPeso(Number(product?.price))}</Text>
       {/* Show stock for non-variant products, or selected variant stock when chosen */}

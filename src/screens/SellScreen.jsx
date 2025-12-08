@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Image, Platform, Switch } from 'react-native';
-import { api } from '../api/client.js';
+import { api, getBaseUrl } from '../api/client.js';
+import { useAuth } from '../api/AuthContext.jsx';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function SellScreen() {
@@ -26,6 +27,7 @@ export default function SellScreen() {
     if (!title || !price) return Alert.alert('Title and price are required');
     try {
       let data;
+      const { access } = useAuth();
       if (imageUri) {
         const form = new FormData();
         form.append('title', title);
@@ -51,9 +53,31 @@ export default function SellScreen() {
           const type = lower.endsWith('.png') ? 'image/png' : lower.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
           form.append('image', { uri: imageUri, name, type });
         }
-        // Do NOT set Content-Type on native; let axios/RN set the boundary automatically
-        const opts = Platform.OS === 'web' ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined;
-        const resp = await api.post('/products/', form, opts);
+        // On native (Android/iOS) use fetch for multipart to avoid axios FormData issues in Expo
+        if (Platform.OS === 'web') {
+          const opts = { headers: { 'Content-Type': 'multipart/form-data' } };
+          const resp = await api.post('/products/', form, opts);
+          data = resp.data;
+        } else {
+          try {
+            const base = (getBaseUrl && typeof getBaseUrl === 'function') ? getBaseUrl() : api.defaults.baseURL;
+            const url = `${base.replace(/\/$/, '')}/products/`;
+            const token = access;
+            const response = await fetch(url, {
+              method: 'POST',
+              body: form,
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            const text = await response.text();
+            let parsed = null;
+            try { parsed = JSON.parse(text); } catch { parsed = text; }
+            if (!response.ok) throw { response: { status: response.status, data: parsed } };
+            data = parsed;
+          } catch (fe) {
+            // Re-throw shape similar to axios error to be handled below
+            throw fe;
+          }
+        }
         data = resp.data;
       } else {
         const payload = { title, price, description, has_variants: hasVariants };

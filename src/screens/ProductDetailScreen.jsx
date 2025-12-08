@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Image, Alert, ScrollView, Modal, TextInput, TouchableOpacity } from 'react-native';
-import { api } from '../api/client.js';
+import { api, getBaseUrl, deleteListing } from '../api/client.js';
 import { useAuth } from '../api/AuthContext.jsx';
 import { Chip } from '../components/ui/Chip.jsx';
 import { Button } from '../components/ui/Button.jsx';
@@ -90,9 +90,28 @@ export default function ProductDetailScreen({ route, navigation }) {
     navigation.navigate('Chat', { partnerId: product.seller?.id, productId: product.id, partnerName: product.seller?.username });
   };
 
+  const resolveImageUri = (p) => {
+    const raw = (p?.image || p?.image_url || '')?.toString();
+    if (!raw) return null;
+    // If already absolute, return as-is
+    if (/^https?:\/\//i.test(raw)) return raw;
+    // If starts with a slash, prefix with base host (strip trailing /api)
+    try {
+      const base = (getBaseUrl && typeof getBaseUrl === 'function' && getBaseUrl()) || '';
+      const hostRoot = base.replace(/\/api\/?$/, '');
+      if (raw.startsWith('/')) return hostRoot + raw;
+      // fallback: join hostRoot and raw
+      return hostRoot ? `${hostRoot}/${raw}` : raw;
+    } catch (_) {
+      return raw;
+    }
+  };
+
+  const imgUri = resolveImageUri(product);
+
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
-      {product?.image_url ? <Image source={{ uri: product.image_url }} style={styles.image} /> : <View style={[styles.image, styles.placeholder]} />}
+      {imgUri ? <Image source={{ uri: imgUri }} style={styles.image} /> : <View style={[styles.image, styles.placeholder]} />}
       <Text style={styles.title}>{product?.title}</Text>
       <Text style={styles.price}>{formatPeso(Number(product?.price))}</Text>
       <Text style={styles.desc}>{product?.description}</Text>
@@ -118,6 +137,40 @@ export default function ProductDetailScreen({ route, navigation }) {
         <Button title="Add to Cart" onPress={handleAddPress} style={[styles.half, styles.mr8]} disabled={loading || (!product?.has_variants && productOutOfStock)} />
         <Button title="Message" variant="secondary" onPress={startChat} style={styles.half} />
       </View>
+
+      {/* Admin-only actions */}
+      {user?.role === 'ADMIN' && (
+        <View style={{ marginTop: 12 }}>
+          <Button
+            title={loading ? 'Deleting...' : 'Delete Listing'}
+            variant="danger"
+            onPress={async () => {
+              if (!product?.id) return Alert.alert('Missing product id');
+              Alert.alert('Confirm delete', 'Are you sure you want to permanently delete this listing?', [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete', style: 'destructive', onPress: async () => {
+                    try {
+                      setLoading(true);
+                      await deleteListing(product.id);
+                      Alert.alert('Deleted', 'Listing has been deleted.');
+                      navigation.goBack();
+                    } catch (e) {
+                      console.warn('Delete failed', e?.response?.status, e?.response?.data || e?.message);
+                      const msg = e?.response?.data?.detail || e?.message || 'Failed to delete listing.';
+                      Alert.alert('Delete failed', String(msg));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }
+                }
+              ]);
+            }}
+            style={{ marginTop: 8 }}
+            disabled={loading}
+          />
+        </View>
+      )}
 
       <Modal visible={qtyModalOpen} transparent animationType="fade" onRequestClose={() => setQtyModalOpen(false)}>
         <View style={styles.modalBackdrop}>

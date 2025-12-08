@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Image, Platform, Switch } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Image, Platform, Switch, ActivityIndicator } from 'react-native';
 import { api, getBaseUrl } from '../api/client.js';
 import { useAuth } from '../api/AuthContext.jsx';
 import * as ImagePicker from 'expo-image-picker';
@@ -13,6 +13,7 @@ export default function SellScreen() {
   const [stock, setStock] = useState('0');
   const [variants, setVariants] = useState([]);
   const { access } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -25,7 +26,13 @@ export default function SellScreen() {
   };
 
   const onCreate = async () => {
-    if (!title || !price) return Alert.alert('Title and price are required');
+    console.log('onCreate invoked', { title, price, imageUri, hasVariants, stock, variants });
+    if (!title || !price) {
+      Alert.alert('Title and price are required');
+      return;
+    }
+    setLoading(true);
+    Alert.alert('Posting', 'Posting item...');
     try {
       let data;
       
@@ -79,7 +86,7 @@ export default function SellScreen() {
             throw fe;
           }
   }
-      } else {
+  } else {
         const payload = { title, price, description, has_variants: hasVariants };
         if (hasVariants) {
           payload.variants = variants.map(v => ({ name: v.name, stock: Number(v.stock || 0) }));
@@ -90,6 +97,7 @@ export default function SellScreen() {
         data = resp.data;
       }
       Alert.alert('Posted', `Item #${data.id} created`);
+      console.log('post success', data);
       setTitle(''); setPrice(''); setDescription(''); setImageUri(null);
       setHasVariants(false); setStock('0'); setVariants([]);
     } catch (e) {
@@ -101,6 +109,8 @@ export default function SellScreen() {
       }
       console.warn('Create product failed', status, msg);
       Alert.alert('Failed to post', `Status: ${status ?? 'N/A'}\n${msg ?? 'Unknown error'}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -136,7 +146,13 @@ export default function SellScreen() {
           <TouchableOpacity style={[styles.button, { backgroundColor: '#6c6cff', marginBottom: 8 }]} onPress={() => setVariants([...variants, { name: '', stock: '0' }])}><Text style={styles.buttonText}>Add Variant</Text></TouchableOpacity>
         </View>
       )}
-      <TouchableOpacity style={styles.button} onPress={onCreate}><Text style={styles.buttonText}>Post Item</Text></TouchableOpacity>
+      <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={onCreate} disabled={loading} accessibilityLabel="Post item">
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Post Item</Text>
+        )}
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -149,4 +165,5 @@ const styles = StyleSheet.create({
   variantRow: { flexDirection: 'row', alignItems: 'center' },
   button: { backgroundColor: '#1877F2', padding: 12, borderRadius: 6, alignItems: 'center' },
   buttonText: { color: '#fff', fontWeight: '600' }
+  ,buttonDisabled: { opacity: 0.6 }
 });

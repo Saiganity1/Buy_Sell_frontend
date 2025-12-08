@@ -38,3 +38,9 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Convenience helper for deleting a product/listing (admin only endpoints)
+export const deleteListing = async (id) => {
+  if (!id) throw new Error('Missing id');
+  return api.delete(`/products/${id}/`);
+};

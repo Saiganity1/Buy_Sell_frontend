@@ -28,7 +28,7 @@ export default function ChatScreen({ route, navigation }) {
     if (productId) params.product_id = productId;
     const { data } = await api.get('/messages/', { params });
   try {
-      // normalize and dedupe by id, sort by created_at asc
+      // normalize and dedupe by id (normalize ids to string), sort by created_at asc
       const list = Array.isArray(data) ? data.slice() : [];
       const uniq = [];
       const seen = new Set();
@@ -36,7 +36,14 @@ export default function ChatScreen({ route, navigation }) {
         const ta = a?.created_at ? new Date(a.created_at).getTime() : 0;
         const tb = b?.created_at ? new Date(b.created_at).getTime() : 0;
         return ta - tb;
-      }).forEach((it) => { if (it && it.id != null && !seen.has(it.id)) { seen.add(it.id); uniq.push(it); } });
+      }).forEach((it) => {
+        if (!it || it.id == null) return;
+        const idStr = String(it.id);
+        if (!seen.has(idStr)) {
+          seen.add(idStr);
+          uniq.push(it);
+        }
+      });
       setMsgs(uniq);
     } catch (e) {
       setMsgs(data);
@@ -81,8 +88,9 @@ export default function ChatScreen({ route, navigation }) {
         }
         // Add incoming message only if not already present (dedupe by id)
         if (payload && payload.id != null) {
+          const payloadIdStr = String(payload.id);
           setMsgs((prev) => {
-            if (prev.some((m) => m && m.id === payload.id)) return prev;
+            if (prev.some((m) => m && String(m.id) === payloadIdStr)) return prev;
             const merged = [...prev, payload];
             merged.sort((a, b) => {
               const ta = a?.created_at ? new Date(a.created_at).getTime() : 0;
@@ -106,9 +114,32 @@ export default function ChatScreen({ route, navigation }) {
       setText('');
     } else {
       if (!partnerId) return;
-      await api.post('/messages/', { recipient_id: partnerId, product: productId, content: text });
-      setText('');
-      load();
+      try {
+        const res = await api.post('/messages/', { recipient_id: partnerId, product: productId, content: text });
+        const created = res.data;
+        setText('');
+        // Append created message if not present (server may also broadcast via websocket)
+        if (created && created.id != null) {
+          const createdIdStr = String(created.id);
+          setMsgs((prev) => {
+            if (prev.some((m) => m && String(m.id) === createdIdStr)) return prev;
+            const merged = [...prev, created];
+            merged.sort((a, b) => {
+              const ta = a?.created_at ? new Date(a.created_at).getTime() : 0;
+              const tb = b?.created_at ? new Date(b.created_at).getTime() : 0;
+              return ta - tb;
+            });
+            return merged;
+          });
+        } else {
+          // Fallback: reload list
+          load();
+        }
+      } catch (err) {
+        // On error, try to reload to show any persisted messages
+        setText('');
+        load();
+      }
     }
   };
 

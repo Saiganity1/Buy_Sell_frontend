@@ -1,5 +1,5 @@
 // Fixed API base URL for deployed backend on Render; override-able via env on Snack
-const DEFAULT_API_BASE_URL = 'https://buy-sell-backend.onrender.com/api';
+const DEFAULT_API_BASE_URL = 'https://buy-sell-backend-4uk9.onrender.com/api';
 
 function detectBaseUrl() {
   try {

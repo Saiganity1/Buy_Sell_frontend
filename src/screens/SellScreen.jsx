@@ -12,6 +12,7 @@ export default function SellScreen() {
   const [hasVariants, setHasVariants] = useState(false);
   const [stock, setStock] = useState('0');
   const [variants, setVariants] = useState([]);
+  const { access } = useAuth();
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -27,7 +28,7 @@ export default function SellScreen() {
     if (!title || !price) return Alert.alert('Title and price are required');
     try {
       let data;
-      const { access } = useAuth();
+      
       if (imageUri) {
         const form = new FormData();
         form.append('title', title);
@@ -77,8 +78,7 @@ export default function SellScreen() {
             // Re-throw shape similar to axios error to be handled below
             throw fe;
           }
-        }
-        data = resp.data;
+  }
       } else {
         const payload = { title, price, description, has_variants: hasVariants };
         if (hasVariants) {

@@ -24,41 +24,49 @@ export default function SellScreen() {
 
   const onCreate = async () => {
     if (!title || !price) return Alert.alert('Title and price are required');
-    let data;
-    if (imageUri) {
-      const form = new FormData();
-      form.append('title', title);
-      form.append('price', String(price));
-      form.append('description', description);
-      form.append('has_variants', String(hasVariants));
-      if (hasVariants) {
-        form.append('variants', JSON.stringify(variants.map(v => ({ name: v.name, stock: Number(v.stock || 0) }))));
+    try {
+      let data;
+      if (imageUri) {
+        const form = new FormData();
+        form.append('title', title);
+        form.append('price', String(price));
+        form.append('description', description);
+        form.append('has_variants', String(hasVariants));
+        if (hasVariants) {
+          form.append('variants', JSON.stringify(variants.map(v => ({ name: v.name, stock: Number(v.stock || 0) }))));
+        } else {
+          form.append('stock', String(Number(stock || 0)));
+        }
+        if (Platform.OS === 'web') {
+          const res = await fetch(imageUri);
+          const blob = await res.blob();
+          const file = new File([blob], 'photo.jpg', { type: blob.type || 'image/jpeg' });
+          form.append('image', file);
+        } else {
+          form.append('image', { uri: imageUri, name: 'photo.jpg', type: 'image/jpeg' });
+        }
+        const headers = Platform.OS === 'web' ? { 'Content-Type': 'multipart/form-data' } : undefined;
+        const resp = await api.post('/products/', form, headers ? { headers } : undefined);
+        data = resp.data;
       } else {
-        form.append('stock', String(Number(stock || 0)));
+        const payload = { title, price, description, has_variants: hasVariants };
+        if (hasVariants) {
+          payload.variants = variants.map(v => ({ name: v.name, stock: Number(v.stock || 0) }));
+        } else {
+          payload.stock = Number(stock || 0);
+        }
+        const resp = await api.post('/products/', payload);
+        data = resp.data;
       }
-      if (Platform.OS === 'web') {
-        const res = await fetch(imageUri);
-        const blob = await res.blob();
-        const file = new File([blob], 'photo.jpg', { type: blob.type || 'image/jpeg' });
-        form.append('image', file);
-      } else {
-        form.append('image', { uri: imageUri, name: 'photo.jpg', type: 'image/jpeg' });
-      }
-      const resp = await api.post('/products/', form);
-      data = resp.data;
-    } else {
-      const payload = { title, price, description, has_variants: hasVariants };
-      if (hasVariants) {
-        payload.variants = variants.map(v => ({ name: v.name, stock: Number(v.stock || 0) }));
-      } else {
-        payload.stock = Number(stock || 0);
-      }
-      const resp = await api.post('/products/', payload);
-      data = resp.data;
+      Alert.alert('Posted', `Item #${data.id} created`);
+      setTitle(''); setPrice(''); setDescription(''); setImageUri(null);
+      setHasVariants(false); setStock('0'); setVariants([]);
+    } catch (e) {
+      const status = e?.response?.status;
+      const msg = e?.response?.data ? JSON.stringify(e.response.data) : e?.message;
+      console.warn('Create product failed', status, msg);
+      Alert.alert('Failed to post', `Status: ${status ?? 'N/A'}\n${msg ?? 'Unknown error'}`);
     }
-    Alert.alert('Posted', `Item #${data.id} created`);
-    setTitle(''); setPrice(''); setDescription(''); setImageUri(null);
-    setHasVariants(false); setStock('0'); setVariants([]);
   };
 
   return (

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Image, Alert, ScrollView, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { api, getBaseUrl, deleteListing } from '../api/client.js';
 import { useAuth } from '../api/AuthContext.jsx';
+import { resolveImageUri } from '../utils/resolveImage.js';
 import { Chip } from '../components/ui/Chip.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { formatPeso } from '../utils/format.js';
@@ -88,23 +89,6 @@ export default function ProductDetailScreen({ route, navigation }) {
 
   const startChat = () => {
     navigation.navigate('Chat', { partnerId: product.seller?.id, productId: product.id, partnerName: product.seller?.username });
-  };
-
-  const resolveImageUri = (p) => {
-    const raw = (p?.image || p?.image_url || '')?.toString();
-    if (!raw) return null;
-    // If already absolute, return as-is
-    if (/^https?:\/\//i.test(raw)) return raw;
-    // If starts with a slash, prefix with base host (strip trailing /api)
-    try {
-      const base = (getBaseUrl && typeof getBaseUrl === 'function' && getBaseUrl()) || '';
-      const hostRoot = base.replace(/\/api\/?$/, '');
-      if (raw.startsWith('/')) return hostRoot + raw;
-      // fallback: join hostRoot and raw
-      return hostRoot ? `${hostRoot}/${raw}` : raw;
-    } catch (_) {
-      return raw;
-    }
   };
 
   const imgUri = resolveImageUri(product);

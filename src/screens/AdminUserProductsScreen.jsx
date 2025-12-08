@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react
 import { Swipeable } from 'react-native-gesture-handler';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { api } from '../api/client.js';
+import { resolveImageUri } from '../utils/resolveImage.js';
 import { relativeTimeFromNow } from '../utils/time.js';
 import { formatPeso } from '../utils/format.js';
 import { theme } from '../theme.js';
@@ -52,8 +53,8 @@ export default function AdminUserProductsScreen({ route, navigation }) {
             )}
           >
             <View style={styles.row}>
-              {item.image || item.image_url ? (
-                <Image source={{ uri: (item.image || item.image_url) }} style={styles.thumb} />
+              {resolveImageUri(item) ? (
+                <Image source={{ uri: resolveImageUri(item) }} style={styles.thumb} />
               ) : (
                 <View style={[styles.thumb, styles.thumbPlaceholder]} />
               )}

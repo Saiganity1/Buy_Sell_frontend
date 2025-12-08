@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { api } from '../api/client.js';
+import { resolveImageUri } from '../utils/resolveImage.js';
 import { useAuth } from '../api/AuthContext.jsx';
 import { useIsFocused } from '@react-navigation/native';
 import { relativeTimeFromNow } from '../utils/time.js';
@@ -28,8 +29,8 @@ export default function MyListingsScreen({ navigation }) {
         keyExtractor={(p) => String(p.id)}
         renderItem={({ item }) => (
           <View style={styles.row}>
-            {item.image || item.image_url ? (
-              <Image source={{ uri: (item.image || item.image_url) }} style={styles.thumb} />
+            {resolveImageUri(item) ? (
+              <Image source={{ uri: resolveImageUri(item) }} style={styles.thumb} />
             ) : (
               <View style={[styles.thumb, styles.thumbPlaceholder]} />
             )}

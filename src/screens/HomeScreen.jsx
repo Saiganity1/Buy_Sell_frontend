@@ -7,6 +7,7 @@ import { Chip } from '../components/ui/Chip.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { theme } from '../theme.js';
 import { formatPeso } from '../utils/format.js';
+import { resolveImageUri } from '../utils/resolveImage.js';
 
 export default function HomeScreen({ navigation }) {
   const [products, setProducts] = useState([]);
@@ -65,8 +66,8 @@ export default function HomeScreen({ navigation }) {
         renderItem={({ item }) => (
           <Card style={{ marginBottom: theme.spacing(2) }}>
             <TouchableOpacity style={{ flexDirection: 'row' }} onPress={() => navigation.navigate('ProductDetail', { product: item })}>
-              {item.image || item.image_url ? (
-                <Image source={{ uri: (item.image || item.image_url) }} style={styles.image} />
+              {resolveImageUri(item) ? (
+                <Image source={{ uri: resolveImageUri(item) }} style={styles.image} />
               ) : <View style={[styles.image, styles.placeholder]} />}
               <View style={{ flex: 1 }}>
                 <Text style={styles.title}>{item.title}</Text>

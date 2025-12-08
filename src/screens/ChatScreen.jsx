@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { api } from '../api/client.js';
+import { resolveImageUri } from '../utils/resolveImage.js';
 import { useAuth } from '../api/AuthContext.jsx';
 import { buildWsUrl } from '../api/ws.js';
 import { formatPeso } from '../utils/format.js';
@@ -126,8 +127,8 @@ export default function ChatScreen({ route, navigation }) {
               <View style={[mine ? styles.bubbleRight : styles.bubbleLeft]}>
                 {isProductShare && product && (
                   <TouchableOpacity style={styles.prodCard} onPress={() => navigation.navigate('ProductDetail', { product })}>
-                    {product?.image || product?.image_url ? (
-                      <Image source={{ uri: (product.image || product.image_url) }} style={styles.prodThumb} />
+                    {resolveImageUri(product) ? (
+                      <Image source={{ uri: resolveImageUri(product) }} style={styles.prodThumb} />
                     ) : (
                       <View style={[styles.prodThumb, styles.prodThumbPh]} />
                     )}

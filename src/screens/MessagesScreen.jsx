@@ -5,18 +5,71 @@ import { useAuth } from '../api/AuthContext.jsx';
 import { relativeTimeFromNow } from '../utils/time.js';
 
 export default function MessagesScreen({ navigation }) {
-  const { user } = useAuth();
+  const { user, access } = useAuth();
   const [items, setItems] = useState([]);
   const [productMap, setProductMap] = useState({});
 
   const load = async () => {
     try {
       const { data } = await api.get('/messages/');
-      setItems(data);
+      // Build conversation threads: one item per partner+product (latest message)
+      const convMap = new Map();
+      (Array.isArray(data) ? data : []).forEach((m) => {
+        if (!m) return;
+        const isMine = m.sender && user && (m.sender.id === user.id || m.sender.username === user.username);
+        const partner = isMine ? (m.recipient && (m.recipient.id || m.recipient)) : (m.sender && (m.sender.id || m.sender));
+        const partnerId = partner && (typeof partner === 'object' ? partner.id : partner) || null;
+        const prod = m.product || '';
+        const key = `${partnerId || 'anon'}|${prod}`;
+        const existing = convMap.get(key);
+        const curTime = m.created_at ? new Date(m.created_at).getTime() : 0;
+        const existingTime = existing && existing.created_at ? new Date(existing.created_at).getTime() : 0;
+        if (!existing || curTime >= existingTime) {
+          // attach partner info in the stored message for navigation convenience
+          const stored = { ...m, _partnerId: partnerId, _productId: prod };
+          convMap.set(key, stored);
+        }
+      });
+      const convs = Array.from(convMap.values()).sort((a, b) => {
+        const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return tb - ta; // newest first
+      });
+      setItems(convs);
     } catch {}
   };
 
   useEffect(() => { load(); }, []);
+
+  // Poll for updates so the messages list refreshes when the other user replies.
+  // This is a simple fallback when there's no global notification websocket.
+  useEffect(() => {
+    const iv = setInterval(() => {
+      load();
+    }, 4000);
+    return () => clearInterval(iv);
+  }, [user]);
+
+  // Realtime notifications websocket (subscribe to per-user notifications)
+  useEffect(() => {
+    if (!access) return;
+    let ws;
+    try {
+      const { buildWsUrl } = require('../api/ws.js');
+      const url = buildWsUrl(`/ws/notifications/?token=${encodeURIComponent(access)}`);
+      ws = new WebSocket(url);
+      ws.onmessage = (ev) => {
+        try {
+          const payload = JSON.parse(ev.data);
+          if (payload?.event === 'new_message') {
+            load();
+          }
+        } catch (err) {}
+      };
+      ws.onclose = () => {};
+    } catch (err) {}
+    return () => { try { ws && ws.close(); } catch (_) {} };
+  }, [access]);
 
   useEffect(() => {
     const ids = Array.from(new Set((items || []).map(m => m.product).filter(Boolean)));
@@ -34,15 +87,16 @@ export default function MessagesScreen({ navigation }) {
 
   const toConversation = (m) => {
     if (!user) return;
-    const isMine = m.sender.id === user.id || m.sender.username === user.username;
-    const partner = isMine ? m.recipient : m.sender;
-    navigation.navigate('Chat', { partnerId: partner.id, partnerName: partner.username, productId: m.product ?? undefined });
+    const partnerId = m._partnerId || (m.sender && m.sender.id) || (m.recipient && m.recipient.id);
+    const partnerName = (m.sender && m.sender.username) || (m.recipient && m.recipient && m.recipient.username) || '';
+    navigation.navigate('Chat', { partnerId, partnerName, productId: m._productId || undefined });
   };
 
   const renderItem = ({ item }) => {
     const prod = item.product ? productMap[item.product] : null;
     const img = prod?.image || prod?.image_url;
-    const partnerName = item.sender.id === user?.id ? item.recipient.username : item.sender.username;
+    const partner = (item.sender && item.sender.id === user?.id) ? item.recipient : item.sender;
+    const partnerName = partner && (partner.username || partner.id) || 'User';
     const rel = relativeTimeFromNow(item.created_at);
     return (
       <TouchableOpacity style={styles.row} onPress={() => toConversation(item)}>
@@ -67,7 +121,7 @@ export default function MessagesScreen({ navigation }) {
       {items.length === 0 ? (
         <View style={styles.empty}><Text style={styles.emptyText}>No messages yet.</Text></View>
       ) : (
-        <FlatList data={items} keyExtractor={(m) => String(m.id)} renderItem={renderItem} />
+        <FlatList data={items} keyExtractor={(m) => `${String(m._partnerId || m.sender?.id || '')}|${String(m._productId || m.product || '')}`} renderItem={renderItem} />
       )}
     </View>
   );

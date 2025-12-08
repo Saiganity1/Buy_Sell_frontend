@@ -87,6 +87,11 @@ export default function ChatScreen({ route, navigation }) {
     ws.onmessage = (evt) => {
       try {
         const payload = JSON.parse(evt.data);
+        if (__DEV__) {
+          try {
+            console.log('[ChatScreen] ws.onmessage payload:', payload, 'msgKey=', msgKey(payload.message || payload));
+          } catch (e) {}
+        }
         if (payload?.event === 'typing') {
           if (payload.user_id === partnerId) {
             setPartnerTyping(!!payload.typing);
@@ -108,7 +113,10 @@ export default function ChatScreen({ route, navigation }) {
           if (!key) return;
           setMsgs((prev) => {
             const seenKeys = new Set(prev.map((m) => msgKey(m)));
-            if (seenKeys.has(key)) return prev;
+            if (seenKeys.has(key)) {
+              if (__DEV__) console.log('[ChatScreen] duplicate incoming message ignored key=', key);
+              return prev;
+            }
             const merged = [...prev, msg];
             merged.sort((a, b) => {
               const ta = a?.created_at ? new Date(a.created_at).getTime() : 0;

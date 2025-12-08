@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Image, Alert, ScrollView, Modal, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, Alert, ScrollView, Modal, TextInput, TouchableOpacity, Linking } from 'react-native';
 import { api, getBaseUrl, deleteListing } from '../api/client.js';
 import { useAuth } from '../api/AuthContext.jsx';
 import { resolveImageUri } from '../utils/resolveImage.js';
@@ -22,6 +22,12 @@ export default function ProductDetailScreen({ route, navigation }) {
       try {
         const { data } = await api.get(`/products/${initialProduct.id}/`);
         setProduct(data);
+        if (__DEV__) {
+          try {
+            console.log('ProductDetail fetched product:', data);
+            console.log('Resolved image uri:', resolveImageUri(data));
+          } catch (e) {}
+        }
       } catch {}
     })();
   }, [initialProduct?.id]);
@@ -93,11 +99,38 @@ export default function ProductDetailScreen({ route, navigation }) {
 
   const imgUri = resolveImageUri(product);
 
+  const openImageInBrowser = async () => {
+    if (!imgUri) return Alert.alert('No image URL available');
+    try {
+      const ok = await Linking.canOpenURL(imgUri);
+      if (!ok) return Alert.alert('Cannot open image URL', imgUri);
+      await Linking.openURL(imgUri);
+    } catch (e) {
+      Alert.alert('Failed to open image', String(e?.message || e));
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
-      {imgUri ? <Image source={{ uri: imgUri }} style={styles.image} /> : <View style={[styles.image, styles.placeholder]} />}
+      {imgUri ? (
+        <TouchableOpacity onPress={openImageInBrowser} activeOpacity={0.8}>
+          <Image source={{ uri: imgUri }} style={styles.image} />
+        </TouchableOpacity>
+      ) : (
+        <View style={[styles.image, styles.placeholder]} />
+      )}
       <Text style={styles.title}>{product?.title}</Text>
       <Text style={styles.price}>{formatPeso(Number(product?.price))}</Text>
+      {/* Show stock for non-variant products, or selected variant stock when chosen */}
+      {product?.has_variants ? (
+        selectedVariant ? (
+          <Text style={styles.stockText}>Stock: {Number(selectedVariant.stock ?? 0)}</Text>
+        ) : (
+          <Text style={styles.stockText}>Select a variant to see stock</Text>
+        )
+      ) : (
+        <Text style={styles.stockText}>Stock: {Number(product?.stock ?? 0)}</Text>
+      )}
       <Text style={styles.desc}>{product?.description}</Text>
       {product?.has_variants && Array.isArray(product?.variants) && (
         <View style={{ marginTop: 12 }}>
@@ -184,6 +217,7 @@ const styles = StyleSheet.create({
   title: { fontWeight: '700', fontSize: 20, marginTop: 12 },
   price: { color: '#1877F2', marginTop: 8, fontWeight: '600' },
   desc: { color: '#444', marginTop: 8 },
+  stockText: { color: '#333', marginTop: 6, fontWeight: '600' },
   buttonRow: { flexDirection: 'row' },
   half: { flex: 1 },
   mr8: { marginRight: 8 },

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, RefreshControl, TextInput, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, RefreshControl, TextInput, ScrollView, Linking, Alert } from 'react-native';
 import { api } from '../api/client.js';
 import { fetchCategories } from '../api/categories.js';
 import { Card } from '../components/ui/Card.jsx';
@@ -67,7 +67,16 @@ export default function HomeScreen({ navigation }) {
           <Card style={{ marginBottom: theme.spacing(2) }}>
             <TouchableOpacity style={{ flexDirection: 'row' }} onPress={() => navigation.navigate('ProductDetail', { product: item })}>
               {resolveImageUri(item) ? (
-                <Image source={{ uri: resolveImageUri(item) }} style={styles.image} />
+                <TouchableOpacity onPress={async () => {
+                  const uri = resolveImageUri(item);
+                  try {
+                    const can = await Linking.canOpenURL(uri);
+                    if (!can) return Alert.alert('Cannot open image URL');
+                    Linking.openURL(uri);
+                  } catch (e) { console.warn('Open image failed', e); }
+                }}>
+                  <Image source={{ uri: resolveImageUri(item) }} style={styles.image} />
+                </TouchableOpacity>
               ) : <View style={[styles.image, styles.placeholder]} />}
               <View style={{ flex: 1 }}>
                 <Text style={styles.title}>{item.title}</Text>

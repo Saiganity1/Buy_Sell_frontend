@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { api } from '../api/client.js';
 import { resolveImageUri } from '../utils/resolveImage.js';
@@ -19,13 +19,29 @@ export default function ChatScreen({ route, navigation }) {
   const typingTimerRef = useRef(null);
   const [partnerTyping, setPartnerTyping] = useState(false);
   const [partnerOnline, setPartnerOnline] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
 
   const load = async () => {
+    setChatLoading(true);
     const params = {};
     if (partnerId) params.partner_id = partnerId;
     if (productId) params.product_id = productId;
     const { data } = await api.get('/messages/', { params });
-    setMsgs(data);
+  try {
+      // normalize and dedupe by id, sort by created_at asc
+      const list = Array.isArray(data) ? data.slice() : [];
+      const uniq = [];
+      const seen = new Set();
+      list.sort((a, b) => {
+        const ta = a?.created_at ? new Date(a.created_at).getTime() : 0;
+        const tb = b?.created_at ? new Date(b.created_at).getTime() : 0;
+        return ta - tb;
+      }).forEach((it) => { if (it && it.id != null && !seen.has(it.id)) { seen.add(it.id); uniq.push(it); } });
+      setMsgs(uniq);
+    } catch (e) {
+      setMsgs(data);
+    }
+    setChatLoading(false);
   };
 
   useEffect(() => { load(); }, []);
@@ -63,7 +79,19 @@ export default function ChatScreen({ route, navigation }) {
           if (payload.user_id === partnerId) setPartnerOnline(!!payload.online);
           return;
         }
-        setMsgs((prev) => [...prev, payload]);
+        // Add incoming message only if not already present (dedupe by id)
+        if (payload && payload.id != null) {
+          setMsgs((prev) => {
+            if (prev.some((m) => m && m.id === payload.id)) return prev;
+            const merged = [...prev, payload];
+            merged.sort((a, b) => {
+              const ta = a?.created_at ? new Date(a.created_at).getTime() : 0;
+              const tb = b?.created_at ? new Date(b.created_at).getTime() : 0;
+              return ta - tb;
+            });
+            return merged;
+          });
+        }
       } catch {}
     };
     ws.onerror = () => {};
@@ -104,12 +132,17 @@ export default function ChatScreen({ route, navigation }) {
           <Text style={styles.headerText}>Chat with {partnerName || 'Seller'}</Text>
           <View style={[styles.statusDot, { backgroundColor: partnerOnline ? '#2ecc71' : '#ccd1d9' }]} />
         </View>
-        {!!productId && (
-          <TouchableOpacity style={styles.headerBtn} onPress={sendProduct} accessibilityLabel="Send product info">
-            <Ionicons name="pricetag" size={18} color="#fff" />
-            <Text style={styles.headerBtnText}>Send product</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {!!productId && (
+            <TouchableOpacity style={[styles.headerBtn, { marginRight: 8 }]} onPress={sendProduct} accessibilityLabel="Send product info">
+              <Ionicons name="pricetag" size={18} color="#fff" />
+              <Text style={styles.headerBtnText}>Send product</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.headerBtn} onPress={load} accessibilityLabel="Refresh chat">
+            {chatLoading ? <ActivityIndicator color="#fff" /> : <Ionicons name="refresh" size={18} color="#fff" />}
           </TouchableOpacity>
-        )}
+        </View>
       </View>
       {partnerTyping && (
         <View style={styles.typingRow}><Text style={styles.typingText}>{partnerName || 'User'} is typing…</Text></View>

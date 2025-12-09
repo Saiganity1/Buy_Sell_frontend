@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, RefreshControl } from 'react-native';
 import { api } from '../api/client.js';
 import { Card } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { formatPeso } from '../utils/format.js';
 import { theme } from '../theme.js';
 
-export default function CartScreen() {
+export default function CartScreen({ navigation }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = async () => {
     const { data } = await api.get('/cart/');
@@ -17,9 +18,23 @@ export default function CartScreen() {
 
   useEffect(() => { load(); }, []);
 
+  // Reload whenever the tab/screen gains focus to reflect newly added items
+  useEffect(() => {
+    const unsub = navigation?.addListener?.('focus', () => {
+      load();
+    });
+    return () => { unsub && unsub(); };
+  }, [navigation]);
+
   const updateQty = async (id, quantity) => {
+    if (quantity < 1) quantity = 1;
     await api.patch(`/cart/${id}/`, { quantity });
     load();
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try { await load(); } finally { setRefreshing(false); }
   };
 
   const checkout = async () => {
@@ -41,6 +56,7 @@ export default function CartScreen() {
         data={items}
         keyExtractor={(i) => String(i.id)}
         contentContainerStyle={{ padding: theme.spacing(2) }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         renderItem={({ item }) => {
           const unit = Number(item.product.price);
           const lineTotal = unit * item.quantity;

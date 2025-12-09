@@ -1,4 +1,4 @@
-import { useTheme } from '../api/ThemeContext';
+import { useTheme } from '../api/ThemeContext.jsx';
 import { lightTheme, darkTheme } from '../theme';
 
 export const useCurrentTheme = () => {

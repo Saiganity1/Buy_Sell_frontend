@@ -1,6 +1,6 @@
-# BuyAndSell Mobile (React Native + Expo)
+# MichaelPlace B&S Mobile (React Native + Expo)
 
-Expo app for Buy & Sell: login/register (Facebook-like style), product feed, sell, cart/checkout, chat, and admin users list.
+Expo app for MichaelPlace B&S: login/register (Facebook-like style), product feed, sell, cart/checkout, chat, and admin users list.
 
 ## Prereqs
 - Node 18+

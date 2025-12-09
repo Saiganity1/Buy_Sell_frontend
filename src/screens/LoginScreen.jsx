@@ -20,7 +20,7 @@ export default function LoginScreen({ navigation }) {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Buy & Sell</Text>
+  <Text style={styles.headerText}>MichaelPlace B&S</Text>
       </View>
       <View style={styles.container}>
         <View style={styles.card}>

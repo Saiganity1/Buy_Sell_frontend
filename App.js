@@ -56,7 +56,7 @@ export default function App() {
       <AuthProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <View style={{ padding: 12, backgroundColor: '#f5f5f5' }}>
-            <Text onLongPress={() => setDevOpen(true)} style={{ fontSize: 16, color: '#333' }}>Buy & Sell</Text>
+            <Text onLongPress={() => setDevOpen(true)} style={{ fontSize: 16, color: '#333' }}>MichaelPlace B&S</Text>
           </View>
           <NavigationContainer>
             <StatusBar style="auto" />

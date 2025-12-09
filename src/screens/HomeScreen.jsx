@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, RefreshControl, TextInput, ScrollView, Linking, Alert } from 'react-native';
+import { SafeAreaView, View, Text, FlatList, TouchableOpacity, Image, StyleSheet, RefreshControl, TextInput, ScrollView, Linking, Alert } from 'react-native';
 import { api } from '../api/client.js';
 import { fetchCategories } from '../api/categories.js';
 import { Card } from '../components/ui/Card.jsx';
@@ -55,14 +55,19 @@ export default function HomeScreen({ navigation }) {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.bg }}>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.header}>
+        <Text style={styles.brand}>MichaelPlace</Text>
+        <Text style={styles.brandSub}>Buy & Sell</Text>
+      </View>
+
       <FlatList
         data={products}
         keyExtractor={(item) => String(item.id)}
         ListHeaderComponent={header}
         ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 32, color: theme.colors.textMuted }}>No products yet. Try refreshing.</Text>}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={load} />}
-        contentContainerStyle={{ paddingHorizontal: theme.spacing(2) }}
+        contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <Card style={{ marginBottom: theme.spacing(2) }}>
             <TouchableOpacity style={{ flexDirection: 'row' }} onPress={() => navigation.navigate('ProductDetail', { product: item })}>
@@ -90,16 +95,34 @@ export default function HomeScreen({ navigation }) {
           </Card>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#0f1724' },
+  header: {
+    paddingVertical: 20,
+    backgroundColor: '#072033',
+    alignItems: 'center',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  brand: { color: '#9be3ff', fontSize: 22, fontWeight: '700' },
+  brandSub: { color: '#d0f7ff', fontSize: 12, marginTop: 4 },
+
+  listContent: { paddingHorizontal: theme.spacing(2), paddingTop: theme.spacing(2), paddingBottom: theme.spacing(4) },
+
   searchRow: { flexDirection: 'row' },
   searchInput: { flex: 1, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radius.sm, padding: 10, marginRight: 8, backgroundColor: '#fff' },
   image: { width: 84, height: 84, borderRadius: theme.radius.sm, marginRight: 12, backgroundColor: '#f2f2f2' },
   placeholder: { alignItems: 'center', justifyContent: 'center' },
-  title: { fontWeight: '700', fontSize: 16, color: theme.colors.text },
-  price: { color: theme.colors.primary, marginTop: 4, fontWeight: '600' },
-  seller: { color: theme.colors.textMuted, marginTop: 4 },
+  title: { fontWeight: '700', fontSize: 16, color: '#06283D' },
+  price: { color: '#0b7285', marginTop: 4, fontWeight: '600' },
+  seller: { color: '#7da6b5', marginTop: 4 },
 });

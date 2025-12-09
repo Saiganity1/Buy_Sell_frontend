@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { SafeAreaView, View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { api } from '../api/client.js';
 import { resolveImageUri } from '../utils/resolveImage.js';
@@ -193,7 +193,7 @@ export default function ChatScreen({ route, navigation }) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={styles.headerText}>Chat with {partnerName || 'Seller'}</Text>
@@ -246,8 +246,8 @@ export default function ChatScreen({ route, navigation }) {
             </View>
           );
         }}
-      />
-      <View style={styles.inputRow}>
+  />
+  <View style={styles.inputRow}>
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
@@ -276,12 +276,13 @@ export default function ChatScreen({ route, navigation }) {
           <Ionicons name="send" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { padding: 12, backgroundColor: '#1877F2', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  safe: { flex: 1, backgroundColor: '#0f1724' },
+  header: { padding: 12, backgroundColor: '#072033', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
   headerText: { color: '#fff', fontWeight: '600' },
   headerBtn: { flexDirection: 'row', alignItems: 'center' },
   headerBtnText: { color: '#fff', marginLeft: 6, fontWeight: '600' },

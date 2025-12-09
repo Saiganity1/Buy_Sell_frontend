@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { SafeAreaView, View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { api } from '../api/client.js';
 import { resolveImageUri } from '../utils/resolveImage.js';
 import { useAuth } from '../api/AuthContext.jsx';
@@ -23,7 +23,12 @@ export default function MyListingsScreen({ navigation }) {
   useEffect(() => { if (isFocused) { load(); } }, [isFocused]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.bg }}>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.header}>
+        <Text style={styles.brand}>MichaelPlace</Text>
+        <Text style={styles.brandSub}>My Listings</Text>
+      </View>
+
       <FlatList
         data={items}
         keyExtractor={(p) => String(p.id)}
@@ -56,20 +61,36 @@ export default function MyListingsScreen({ navigation }) {
           </View>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#0f1724' },
+  header: {
+    paddingVertical: 18,
+    backgroundColor: '#072033',
+    alignItems: 'center',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  brand: { color: '#9be3ff', fontSize: 22, fontWeight: '700' },
+  brandSub: { color: '#d0f7ff', fontSize: 12, marginTop: 4 },
+
   row: { flexDirection: 'row', padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee', alignItems: 'center', backgroundColor: '#fff' },
   title: { fontWeight: '600' },
   subRow: { marginTop: 4 },
-  price: { color: '#1877F2', fontWeight: '600' },
+  price: { color: '#0b7285', fontWeight: '600' },
   dot: { color: '#888' },
   time: { color: '#888' },
   stock: { color: '#666' },
-  btn: { backgroundColor: '#1877F2', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
-  btnText: { color: '#fff', fontWeight: '600' },
+  btn: { backgroundColor: '#7dd3fc', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
+  btnText: { color: '#06283D', fontWeight: '600' },
   thumb: { width: 48, height: 48, borderRadius: 6, marginRight: 12, backgroundColor: '#f2f2f2' },
   thumbPlaceholder: { alignItems: 'center', justifyContent: 'center' },
 });

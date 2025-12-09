@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, RefreshControl } from 'react-native';
+import { SafeAreaView, View, Text, FlatList, TouchableOpacity, StyleSheet, Image, RefreshControl } from 'react-native';
 import { api } from '../api/client.js';
 import { useAuth } from '../api/AuthContext.jsx';
 import { relativeTimeFromNow } from '../utils/time.js';
@@ -142,7 +142,12 @@ export default function MessagesScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.header}>
+        <Text style={styles.brand}>MichaelPlace</Text>
+        <Text style={styles.brandSub}>Messages</Text>
+      </View>
+
       {items.length === 0 ? (
         <View style={styles.empty}><Text style={styles.emptyText}>No messages yet.</Text></View>
       ) : (
@@ -153,11 +158,27 @@ export default function MessagesScreen({ navigation }) {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#0f1724' },
+  header: {
+    paddingVertical: 18,
+    backgroundColor: '#072033',
+    alignItems: 'center',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  brand: { color: '#9be3ff', fontSize: 22, fontWeight: '700' },
+  brandSub: { color: '#d0f7ff', fontSize: 12, marginTop: 4 },
+
   row: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee', flexDirection: 'row', alignItems: 'center' },
   title: { fontWeight: '600', marginBottom: 6, maxWidth: '75%' },
   snippet: { color: '#666' },

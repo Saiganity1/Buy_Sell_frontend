@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, RefreshControl } from 'react-native';
+import { SafeAreaView, View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, RefreshControl } from 'react-native';
 import { api } from '../api/client.js';
 import { Card } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/Button.jsx';
@@ -51,7 +51,12 @@ export default function CartScreen({ navigation }) {
   const total = items.reduce((sum, it) => sum + Number(it.product.price) * it.quantity, 0);
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.bg }}>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.header}>
+        <Text style={styles.brand}>MichaelPlace</Text>
+        <Text style={styles.brandSub}>Your Cart</Text>
+      </View>
+
       <FlatList
         data={items}
         keyExtractor={(i) => String(i.id)}
@@ -84,15 +89,31 @@ export default function CartScreen({ navigation }) {
         <Text style={styles.total}>Total: {formatPeso(total)}</Text>
         <Button title="Checkout" onPress={checkout} disabled={loading || items.length === 0} />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#0f1724' },
+  header: {
+    paddingVertical: 18,
+    backgroundColor: '#072033',
+    alignItems: 'center',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  brand: { color: '#9be3ff', fontSize: 22, fontWeight: '700' },
+  brandSub: { color: '#d0f7ff', fontSize: 12, marginTop: 4 },
+
   row: { flexDirection: 'row', alignItems: 'center' },
-  title: { fontWeight: '700', color: theme.colors.text },
-  unit: { color: theme.colors.textMuted, marginTop: 4 },
-  subtotal: { color: theme.colors.primary, marginTop: 4, fontWeight: '600' },
+  title: { fontWeight: '700', color: '#06283D' },
+  unit: { color: '#7da6b5', marginTop: 4 },
+  subtotal: { color: '#0b7285', marginTop: 4, fontWeight: '600' },
   qtyBox: { flexDirection: 'row', alignItems: 'center' },
   qtyBtn: { fontSize: 20, paddingHorizontal: 10 },
   qtyText: { minWidth: 24, textAlign: 'center' },

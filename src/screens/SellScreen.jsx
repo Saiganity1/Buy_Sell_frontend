@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Image, Platform, Switch, ActivityIndicator } from 'react-native';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Image, Platform, Switch, ActivityIndicator } from 'react-native';
 import { api, getBaseUrl } from '../api/client.js';
 import { useAuth } from '../api/AuthContext.jsx';
 import * as ImagePicker from 'expo-image-picker';
@@ -115,8 +115,14 @@ export default function SellScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Sell an Item</Text>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.header}>
+        <Text style={styles.brand}>MichaelPlace</Text>
+        <Text style={styles.brandSub}>Sell an Item</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Sell an Item</Text>
       <TextInput style={styles.input} placeholder="Title" value={title} onChangeText={setTitle} />
       <TextInput style={styles.input} placeholder="Price" keyboardType="decimal-pad" value={price} onChangeText={setPrice} />
       <TextInput style={[styles.input, { height: 100 }]} placeholder="Description" value={description} onChangeText={setDescription} multiline />
@@ -153,17 +159,34 @@ export default function SellScreen() {
           <Text style={styles.buttonText}>Post Item</Text>
         )}
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#0f1724' },
+  header: {
+    paddingVertical: 18,
+    backgroundColor: '#072033',
+    alignItems: 'center',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  brand: { color: '#9be3ff', fontSize: 22, fontWeight: '700' },
+  brandSub: { color: '#d0f7ff', fontSize: 12, marginTop: 4 },
+
   container: { padding: 16 },
-  title: { fontSize: 18, fontWeight: '600', marginBottom: 12 },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 6, padding: 12, marginBottom: 10 },
+  title: { fontSize: 18, fontWeight: '600', marginBottom: 12, color: '#06283D' },
+  input: { borderWidth: 1, borderColor: '#e6eef3', borderRadius: 10, padding: 12, marginBottom: 10, backgroundColor: '#fff' },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   variantRow: { flexDirection: 'row', alignItems: 'center' },
-  button: { backgroundColor: '#1877F2', padding: 12, borderRadius: 6, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: '600' }
-  ,buttonDisabled: { opacity: 0.6 }
+  button: { backgroundColor: '#7dd3fc', padding: 12, borderRadius: 10, alignItems: 'center' },
+  buttonText: { color: '#06283D', fontWeight: '700' },
+  buttonDisabled: { opacity: 0.6 },
 });

@@ -2,9 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { api } from '../api/client.js';
-import { theme } from '../theme.js';
+import { useCurrentTheme } from '../hooks/useCurrentTheme.js';
 
 export default function AdminUsersScreen({ navigation }) {
+  const theme = useCurrentTheme();
+  const styles = getStyles(theme);
+  const rs = rowStyles(theme);
   const [users, setUsers] = useState([]);
 
   const load = async () => {
@@ -23,11 +26,11 @@ export default function AdminUsersScreen({ navigation }) {
         renderItem={({ item }) => {
           const initials = ((item.first_name && item.first_name[0]) || (item.username && item.username[0]) || '?').toUpperCase();
           return (
-            <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('AdminUserProducts', { userId: item.id, username: item.username })}>
-              <View style={styles.avatar}><Text style={styles.avatarText}>{initials}</Text></View>
+            <TouchableOpacity style={rs.row} onPress={() => navigation.navigate('AdminUserProducts', { userId: item.id, username: item.username })}>
+              <View style={rs.avatar}><Text style={rs.avatarText}>{initials}</Text></View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.title}>{item.username}</Text>
-                <Text style={styles.sub} numberOfLines={1}>{[item.first_name, item.last_name].filter(Boolean).join(' ') || '—'}</Text>
+                <Text style={rs.title}>{item.username}</Text>
+                <Text style={rs.sub} numberOfLines={1}>{[item.first_name, item.last_name].filter(Boolean).join(' ') || '—'}</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
             </TouchableOpacity>
@@ -38,11 +41,14 @@ export default function AdminUsersScreen({ navigation }) {
     </View>
   );
 }
+const getStyles = (theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.colors.bg },
+});
 
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee', backgroundColor: '#fff' },
-  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#E8F0FE', alignItems: 'center', justifyContent: 'center' },
+const rowStyles = (theme) => StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border, backgroundColor: theme.colors.cardBg },
+  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: theme.colors.primary, fontWeight: '700' },
   title: { fontWeight: '700', color: theme.colors.text },
-  sub: { color: theme.colors.textMuted }
+  sub: { color: theme.colors.textMuted },
 });

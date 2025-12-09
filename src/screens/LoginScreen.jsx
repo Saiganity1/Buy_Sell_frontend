@@ -10,12 +10,14 @@ import {
   Platform,
   ActivityIndicator,
   Animated,
+  StyleSheet,
 } from 'react-native';
 import { useAuth } from '../api/AuthContext.jsx';
-import styles from './LoginScreen.styles';
+import { useCurrentTheme } from '../hooks/useCurrentTheme.js';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
+  const theme = useCurrentTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -25,6 +27,8 @@ export default function LoginScreen({ navigation }) {
   const passwordRef = useRef(null);
   const cardScale = useRef(new Animated.Value(0.98)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
+
+  const styles = getStyles(theme);
 
   useEffect(() => {
     Animated.spring(cardScale, { toValue: 1, useNativeDriver: true, friction: 8, tension: 60 }).start();
@@ -145,3 +149,89 @@ export default function LoginScreen({ navigation }) {
     </SafeAreaView>
   );
 }
+
+const getStyles = (theme) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: theme.colors.bg },
+  flex: { flex: 1 },
+  header: {
+    paddingVertical: 28,
+    backgroundColor: theme.colors.headerBg,
+    alignItems: 'center',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  brand: { color: theme.colors.primary, fontSize: 26, fontWeight: '700' },
+  brandSub: { color: theme.colors.primarySoft, fontSize: 12, marginTop: 4 },
+
+  container: {
+    flex: 1,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  card: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.radius.lg,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+
+  title: { fontSize: 20, color: theme.colors.text, fontWeight: '700', marginBottom: 6 },
+  subtitle: { fontSize: 13, color: theme.colors.textMuted, marginBottom: 14 },
+
+  error: { color: theme.colors.danger, marginBottom: 10 },
+
+  input: {
+    backgroundColor: theme.colors.inputBg,
+    borderColor: theme.colors.inputBorder,
+    borderWidth: 1,
+    borderRadius: theme.radius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    color: theme.colors.text,
+    fontSize: 15,
+    marginBottom: 10,
+  },
+
+  passwordRow: { flexDirection: 'row', alignItems: 'center' },
+  passwordInput: { flex: 1, marginBottom: 0 },
+
+  showBtn: {
+    marginLeft: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: theme.radius.sm,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+  },
+  showText: { color: theme.colors.primary, fontWeight: '600' },
+
+  buttonWrap: { marginTop: 14, borderRadius: theme.radius.md, overflow: 'hidden' },
+  button: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: theme.radius.md,
+  },
+  buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  buttonPressed: { opacity: 0.96 },
+  buttonDisabled: { opacity: 0.7 },
+
+  link: { marginTop: 12, alignItems: 'center' },
+  linkText: { color: theme.colors.primary, fontWeight: '600' },
+
+  footer: { marginTop: 20, alignItems: 'center' },
+  small: { color: theme.colors.textMuted, fontSize: 12 },
+});

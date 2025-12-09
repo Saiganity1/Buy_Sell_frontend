@@ -4,9 +4,11 @@ import { api } from '../api/client.js';
 import { Card } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { formatPeso } from '../utils/format.js';
-import { theme } from '../theme.js';
+import { useCurrentTheme } from '../hooks/useCurrentTheme.js';
 
 export default function CartScreen({ navigation }) {
+  const theme = useCurrentTheme();
+  const styles = getStyles(theme);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -92,12 +94,11 @@ export default function CartScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f1724' },
+const getStyles = (theme) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: theme.colors.bg },
   header: {
     paddingVertical: 18,
-    backgroundColor: '#072033',
+    backgroundColor: theme.colors.headerBg,
     alignItems: 'center',
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
@@ -107,16 +108,16 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
   },
-  brand: { color: '#9be3ff', fontSize: 22, fontWeight: '700' },
-  brandSub: { color: '#d0f7ff', fontSize: 12, marginTop: 4 },
+  brand: { color: theme.colors.primary, fontSize: 22, fontWeight: '700' },
+  brandSub: { color: theme.colors.primarySoft, fontSize: 12, marginTop: 4 },
 
   row: { flexDirection: 'row', alignItems: 'center' },
-  title: { fontWeight: '700', color: '#06283D' },
-  unit: { color: '#7da6b5', marginTop: 4 },
-  subtotal: { color: '#0b7285', marginTop: 4, fontWeight: '600' },
+  title: { fontWeight: '700', color: theme.colors.text },
+  unit: { color: theme.colors.textMuted, marginTop: 4 },
+  subtotal: { color: theme.colors.primary, marginTop: 4, fontWeight: '600' },
   qtyBox: { flexDirection: 'row', alignItems: 'center' },
-  qtyBtn: { fontSize: 20, paddingHorizontal: 10 },
-  qtyText: { minWidth: 24, textAlign: 'center' },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: theme.spacing(2), borderTopWidth: 1, borderTopColor: theme.colors.border, backgroundColor: '#fff' },
-  total: { fontWeight: '700' },
+  qtyBtn: { fontSize: 20, paddingHorizontal: 10, color: theme.colors.text },
+  qtyText: { minWidth: 24, textAlign: 'center', color: theme.colors.text },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: theme.spacing(2), borderTopWidth: 1, borderTopColor: theme.colors.border, backgroundColor: theme.colors.cardBg },
+  total: { fontWeight: '700', color: theme.colors.text },
 });

@@ -6,9 +6,11 @@ import { useAuth } from '../api/AuthContext.jsx';
 import { useIsFocused } from '@react-navigation/native';
 import { relativeTimeFromNow } from '../utils/time.js';
 import { formatPeso } from '../utils/format.js';
-import { theme } from '../theme.js';
+import { useCurrentTheme } from '../hooks/useCurrentTheme.js';
 
 export default function MyListingsScreen({ navigation }) {
+  const theme = useCurrentTheme();
+  const styles = getStyles(theme);
   const { user } = useAuth();
   const isFocused = useIsFocused();
   const [items, setItems] = useState([]);
@@ -64,33 +66,33 @@ export default function MyListingsScreen({ navigation }) {
     </SafeAreaView>
   );
 }
+const getStyles = (theme) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: theme.colors.bg },
+    header: {
+      paddingVertical: 18,
+      backgroundColor: theme.colors.headerBg,
+      alignItems: 'center',
+      borderBottomLeftRadius: 16,
+      borderBottomRightRadius: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.18,
+      shadowRadius: 12,
+      elevation: 6,
+    },
+    brand: { color: theme.colors.primary, fontSize: 22, fontWeight: '700' },
+    brandSub: { color: theme.colors.primarySoft, fontSize: 12, marginTop: 4 },
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f1724' },
-  header: {
-    paddingVertical: 18,
-    backgroundColor: '#072033',
-    alignItems: 'center',
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  brand: { color: '#9be3ff', fontSize: 22, fontWeight: '700' },
-  brandSub: { color: '#d0f7ff', fontSize: 12, marginTop: 4 },
-
-  row: { flexDirection: 'row', padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee', alignItems: 'center', backgroundColor: '#fff' },
-  title: { fontWeight: '600' },
-  subRow: { marginTop: 4 },
-  price: { color: '#0b7285', fontWeight: '600' },
-  dot: { color: '#888' },
-  time: { color: '#888' },
-  stock: { color: '#666' },
-  btn: { backgroundColor: '#7dd3fc', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
-  btnText: { color: '#06283D', fontWeight: '600' },
-  thumb: { width: 48, height: 48, borderRadius: 6, marginRight: 12, backgroundColor: '#f2f2f2' },
-  thumbPlaceholder: { alignItems: 'center', justifyContent: 'center' },
-});
+    row: { flexDirection: 'row', padding: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border, alignItems: 'center', backgroundColor: theme.colors.cardBg },
+    title: { fontWeight: '600', color: theme.colors.text },
+    subRow: { marginTop: 4 },
+    price: { color: theme.colors.primary, fontWeight: '600' },
+    dot: { color: theme.colors.textMuted },
+    time: { color: theme.colors.textMuted },
+    stock: { color: theme.colors.textMuted },
+    btn: { backgroundColor: theme.colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
+    btnText: { color: '#fff', fontWeight: '600' },
+    thumb: { width: 48, height: 48, borderRadius: 6, marginRight: 12, backgroundColor: theme.colors.border },
+    thumbPlaceholder: { alignItems: 'center', justifyContent: 'center' },
+  });

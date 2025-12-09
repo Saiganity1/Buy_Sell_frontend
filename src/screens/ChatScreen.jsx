@@ -7,10 +7,12 @@ import { useAuth } from '../api/AuthContext.jsx';
 import { buildWsUrl } from '../api/ws.js';
 import { formatPeso } from '../utils/format.js';
 import { relativeTimeFromNow } from '../utils/time.js';
-import { theme } from '../theme.js';
+import { useCurrentTheme } from '../hooks/useCurrentTheme.js';
 
 export default function ChatScreen({ route, navigation }) {
   const { partnerId, partnerName, productId } = route.params || {};
+  const theme = useCurrentTheme();
+  const styles = getStyles(theme);
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState('');
   const [product, setProduct] = useState(null);
@@ -197,17 +199,17 @@ export default function ChatScreen({ route, navigation }) {
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={styles.headerText}>Chat with {partnerName || 'Seller'}</Text>
-          <View style={[styles.statusDot, { backgroundColor: partnerOnline ? '#2ecc71' : '#ccd1d9' }]} />
+          <View style={[styles.statusDot, { backgroundColor: partnerOnline ? '#2ecc71' : theme.colors.inputBorder }]} />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {!!productId && (
             <TouchableOpacity style={[styles.headerBtn, { marginRight: 8 }]} onPress={sendProduct} accessibilityLabel="Send product info">
-              <Ionicons name="pricetag" size={18} color="#fff" />
+              <Ionicons name="pricetag" size={18} color={theme.colors.cardBg === '#fff' ? '#fff' : theme.colors.text} />
               <Text style={styles.headerBtnText}>Send product</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.headerBtn} onPress={load} accessibilityLabel="Refresh chat">
-            {chatLoading ? <ActivityIndicator color="#fff" /> : <Ionicons name="refresh" size={18} color="#fff" />}
+            {chatLoading ? <ActivityIndicator color={theme.colors.cardBg === '#fff' ? '#fff' : theme.colors.text} /> : <Ionicons name="refresh" size={18} color={theme.colors.cardBg === '#fff' ? '#fff' : theme.colors.text} />}
           </TouchableOpacity>
         </View>
       </View>
@@ -223,8 +225,8 @@ export default function ChatScreen({ route, navigation }) {
           const isProductShare = typeof item.content === 'string' && item.content.startsWith('::product-share::');
           const shownText = isProductShare ? item.content.replace('::product-share::', '').trim() : item.content;
           return (
-            <View style={[styles.msgRow, mine ? styles.alignRight : styles.alignLeft]}>
-              <View style={[mine ? styles.bubbleRight : styles.bubbleLeft]}>
+              <View style={[styles.msgRow, mine ? styles.alignRight : styles.alignLeft]}>
+                <View style={[mine ? styles.bubbleRight : styles.bubbleLeft]}>
                 {isProductShare && product && (
                   <TouchableOpacity style={styles.prodCard} onPress={() => navigation.navigate('ProductDetail', { product })}>
                     {resolveImageUri(product) ? (
@@ -279,33 +281,33 @@ export default function ChatScreen({ route, navigation }) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f1724' },
-  header: { padding: 12, backgroundColor: '#072033', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
-  headerText: { color: '#fff', fontWeight: '600' },
-  headerBtn: { flexDirection: 'row', alignItems: 'center' },
-  headerBtnText: { color: '#fff', marginLeft: 6, fontWeight: '600' },
-  statusDot: { width: 8, height: 8, borderRadius: 4, marginLeft: 8 },
-  msgRow: { paddingHorizontal: 12, paddingVertical: 8 },
-  alignLeft: { alignItems: 'flex-start' },
-  alignRight: { alignItems: 'flex-end' },
-  bubbleLeft: { maxWidth: '80%', backgroundColor: '#F2F2F7', borderRadius: 16, padding: 10, borderTopLeftRadius: 6 },
-  bubbleRight: { maxWidth: '80%', backgroundColor: '#1877F2', borderRadius: 16, padding: 10, borderTopRightRadius: 6 },
-  bubbleTextLeft: { color: '#111' },
-  bubbleTextRight: { color: '#fff' },
-  timeLeft: { color: '#777', fontSize: 10, marginTop: 4 },
-  timeRight: { color: 'rgba(255,255,255,0.9)', fontSize: 10, marginTop: 4, textAlign: 'right' },
-  prodCard: { flexDirection: 'row', alignItems: 'center', padding: 8, borderWidth: 1, borderColor: '#e8e8ef', borderRadius: 10, marginBottom: 6, backgroundColor: '#fff' },
-  prodThumb: { width: 44, height: 44, borderRadius: 6, marginRight: 8, backgroundColor: '#f2f2f2' },
-  prodThumbPh: { alignItems: 'center', justifyContent: 'center' },
-  prodTitle: { fontWeight: '700' },
-  prodPrice: { color: '#1877F2', fontWeight: '600', marginTop: 2 },
-  typingRow: { paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#fff' },
-  typingText: { color: '#777', fontStyle: 'italic', fontSize: 12 },
-  inputRow: { flexDirection: 'row', alignItems: 'center', padding: 10, borderTopWidth: 1, borderTopColor: '#eee', backgroundColor: '#fff' },
-  inputContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F6F7F9', borderRadius: 24, paddingHorizontal: 12, marginRight: 10, borderWidth: 1, borderColor: '#eee' },
-  input: { flex: 1, paddingVertical: 10 },
-  inlineIconBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  sendFab: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#1877F2', alignItems: 'center', justifyContent: 'center' },
-});
+const getStyles = (theme) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: theme.colors.bg },
+    header: { padding: 12, backgroundColor: theme.colors.headerBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
+    headerText: { color: theme.colors.text, fontWeight: '600' },
+    headerBtn: { flexDirection: 'row', alignItems: 'center' },
+    headerBtnText: { color: theme.colors.text, marginLeft: 6, fontWeight: '600' },
+    statusDot: { width: 8, height: 8, borderRadius: 4, marginLeft: 8 },
+    msgRow: { paddingHorizontal: 12, paddingVertical: 8 },
+    alignLeft: { alignItems: 'flex-start' },
+    alignRight: { alignItems: 'flex-end' },
+    bubbleLeft: { maxWidth: '80%', backgroundColor: theme.colors.cardBg, borderRadius: 16, padding: 10, borderTopLeftRadius: 6, borderWidth: 1, borderColor: theme.colors.border },
+    bubbleRight: { maxWidth: '80%', backgroundColor: theme.colors.primary, borderRadius: 16, padding: 10, borderTopRightRadius: 6 },
+    bubbleTextLeft: { color: theme.colors.text },
+    bubbleTextRight: { color: '#fff' },
+    timeLeft: { color: theme.colors.textMuted, fontSize: 10, marginTop: 4 },
+    timeRight: { color: 'rgba(255,255,255,0.9)', fontSize: 10, marginTop: 4, textAlign: 'right' },
+    prodCard: { flexDirection: 'row', alignItems: 'center', padding: 8, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 10, marginBottom: 6, backgroundColor: theme.colors.cardBg },
+    prodThumb: { width: 44, height: 44, borderRadius: 6, marginRight: 8, backgroundColor: theme.colors.border },
+    prodThumbPh: { alignItems: 'center', justifyContent: 'center' },
+    prodTitle: { fontWeight: '700', color: theme.colors.text },
+    prodPrice: { color: theme.colors.primary, fontWeight: '600', marginTop: 2 },
+    typingRow: { paddingHorizontal: 12, paddingVertical: 6, backgroundColor: theme.colors.cardBg },
+    typingText: { color: theme.colors.textMuted, fontStyle: 'italic', fontSize: 12 },
+    inputRow: { flexDirection: 'row', alignItems: 'center', padding: 10, borderTopWidth: 1, borderTopColor: theme.colors.border, backgroundColor: theme.colors.cardBg },
+    inputContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.inputBg, borderRadius: 24, paddingHorizontal: 12, marginRight: 10, borderWidth: 1, borderColor: theme.colors.inputBorder },
+    input: { flex: 1, paddingVertical: 10, color: theme.colors.text },
+    inlineIconBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+    sendFab: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' },
+  });

@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useCurrentTheme } from '../../hooks/useCurrentTheme.js';
 
 export function Snack({ visible, message, type = 'success', onHide, duration = 2000 }) {
+  const theme = useCurrentTheme();
   useEffect(() => {
     if (!visible) return;
     const t = setTimeout(() => { onHide && onHide(); }, duration);
@@ -9,11 +11,12 @@ export function Snack({ visible, message, type = 'success', onHide, duration = 2
   }, [visible, duration, onHide]);
 
   if (!visible) return null;
-  const bg = type === 'success' ? '#1e7e34' : type === 'error' ? '#d93025' : '#333';
+  const bg = type === 'success' ? theme.colors.success : type === 'error' ? theme.colors.danger : theme.colors.cardBg;
+  const textColor = type === 'success' || type === 'error' ? '#fff' : theme.colors.text;
   return (
     <View pointerEvents="none" style={styles.container}>
       <View style={[styles.snack, { backgroundColor: bg }]}>
-        <Text style={styles.text} numberOfLines={2}>{message}</Text>
+        <Text style={[styles.text, { color: textColor }]} numberOfLines={2}>{message}</Text>
       </View>
     </View>
   );

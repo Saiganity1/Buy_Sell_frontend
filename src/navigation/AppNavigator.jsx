@@ -14,23 +14,26 @@ import MessagesScreen from '../screens/MessagesScreen.jsx';
 import AdminUsersScreen from '../screens/AdminUsersScreen.jsx';
 import AdminUserProductsScreen from '../screens/AdminUserProductsScreen.jsx';
 import { useAuth } from '../api/AuthContext.jsx';
+import { useTheme } from '../api/ThemeContext.jsx';
 import MyListingsScreen from '../screens/MyListingsScreen.jsx';
 import EditListingScreen from '../screens/EditListingScreen.jsx';
-import { theme } from '../theme.js';
+import { lightTheme, darkTheme } from '../theme.js';
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 
-function TabsNavigator() {
+function TabsNavigator({ theme }) {
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
-        headerRight: () => <RNButton title="Logout" onPress={logout} />,
+        headerRight: () => <RNButton title="Logout" onPress={logout} color={theme.colors.primary} />,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.textMuted,
-        tabBarStyle: { backgroundColor: '#fff' },
+        tabBarStyle: { backgroundColor: theme.colors.cardBg, borderTopColor: theme.colors.border },
+        headerStyle: { backgroundColor: theme.colors.headerBg },
+        headerTintColor: theme.colors.text,
         tabBarIcon: ({ color, size }) => {
           const name =
             route.name === 'Home' ? 'home' :
@@ -52,14 +55,18 @@ function TabsNavigator() {
   );
 }
 
-export default function AppNavigator() {
+export default function AppNavigator({ theme }) {
   const { user } = useAuth();
+  const { isDarkMode } = useTheme();
+  const currentTheme = theme || (isDarkMode ? darkTheme : lightTheme);
+  
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#fff' },
+        headerStyle: { backgroundColor: currentTheme.colors.headerBg },
         headerShadowVisible: true,
-        headerTintColor: theme.colors.text,
+        headerTintColor: currentTheme.colors.text,
+        headerTitleStyle: { color: currentTheme.colors.text },
       }}
     >
       {!user ? (
@@ -69,7 +76,7 @@ export default function AppNavigator() {
         </>
       ) : (
         <>
-          <Stack.Screen name="Main" component={TabsNavigator} options={{ headerShown: false }} />
+          <Stack.Screen name="Main" component={() => <TabsNavigator theme={currentTheme} />} options={{ headerShown: false }} />
           <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Product' }} />
           <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Chat' }} />
           <Stack.Screen name="AdminUserProducts" component={AdminUserProductsScreen} options={{ title: 'User Listings' }} />

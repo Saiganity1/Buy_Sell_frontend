@@ -65,7 +65,14 @@ export default function ChatScreen({ route, navigation }) {
     setChatLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  // Initial load and refresh when screen gains focus
+  useEffect(() => {
+    load();
+    const unsubscribe = navigation.addListener('focus', () => {
+      load();
+    });
+    return () => { unsubscribe && unsubscribe(); };
+  }, [navigation]);
 
   useEffect(() => {
     if (!productId) { setProduct(null); return; }
@@ -210,7 +217,7 @@ export default function ChatScreen({ route, navigation }) {
       <FlatList
         style={{ flex: 1, backgroundColor: theme.colors.bg }}
         data={msgs}
-        keyExtractor={(m) => String(m.id)}
+        keyExtractor={(m) => msgKey(m) || String(m.id || Math.random())}
         renderItem={({ item }) => {
           const mine = (item.sender?.id && user?.id && item.sender.id === user.id) || (item.sender?.username && user?.username && item.sender.username === user.username);
           const isProductShare = typeof item.content === 'string' && item.content.startsWith('::product-share::');

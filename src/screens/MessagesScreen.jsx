@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, RefreshControl } from 'react-native';
 import { api } from '../api/client.js';
 import { useAuth } from '../api/AuthContext.jsx';
 import { relativeTimeFromNow } from '../utils/time.js';
@@ -8,6 +8,7 @@ export default function MessagesScreen({ navigation }) {
   const { user, access } = useAuth();
   const [items, setItems] = useState([]);
   const [productMap, setProductMap] = useState({});
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = async () => {
     try {
@@ -39,7 +40,23 @@ export default function MessagesScreen({ navigation }) {
     } catch {}
   };
 
-  useEffect(() => { load(); }, []);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Initial load and reload whenever screen gains focus
+  useEffect(() => {
+    load();
+    const unsubscribe = navigation.addListener('focus', () => {
+      load();
+    });
+    return () => { unsubscribe && unsubscribe(); };
+  }, [navigation]);
 
   // Poll for updates so the messages list refreshes when the other user replies.
   // This is a simple fallback when there's no global notification websocket.
@@ -98,6 +115,7 @@ export default function MessagesScreen({ navigation }) {
     const partner = (item.sender && item.sender.id === user?.id) ? item.recipient : item.sender;
     const partnerName = partner && (partner.username || partner.id) || 'User';
     const rel = relativeTimeFromNow(item.created_at);
+    const latestFromPartner = item.sender && user && (item.sender.id !== user.id && item.sender.username !== user.username);
     return (
       <TouchableOpacity style={styles.row} onPress={() => toConversation(item)}>
         {img ? (
@@ -110,7 +128,14 @@ export default function MessagesScreen({ navigation }) {
             <Text numberOfLines={1} style={styles.title}>{partnerName}{prod?.title ? ` · ${prod.title}` : ''}</Text>
             <Text style={styles.time}>{rel}</Text>
           </View>
-          <Text numberOfLines={1} style={styles.snippet}>{item.content}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text numberOfLines={1} style={[styles.snippet, { flex: 1 }]}>{item.content}</Text>
+            {latestFromPartner && (
+              <View style={styles.badge} accessibilityLabel="Unread">
+                <Text style={styles.badgeText}>•</Text>
+              </View>
+            )}
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -121,7 +146,12 @@ export default function MessagesScreen({ navigation }) {
       {items.length === 0 ? (
         <View style={styles.empty}><Text style={styles.emptyText}>No messages yet.</Text></View>
       ) : (
-        <FlatList data={items} keyExtractor={(m) => `${String(m._partnerId || m.sender?.id || '')}|${String(m._productId || m.product || '')}`} renderItem={renderItem} />
+        <FlatList
+          data={items}
+          keyExtractor={(m) => `${String(m._partnerId || m.sender?.id || '')}|${String(m._productId || m.product || '')}`}
+          renderItem={renderItem}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        />
       )}
     </View>
   );
@@ -136,4 +166,6 @@ const styles = StyleSheet.create({
   emptyText: { color: '#666' },
   thumb: { width: 48, height: 48, borderRadius: 6, marginRight: 12, backgroundColor: '#f2f2f2' },
   thumbPlaceholder: { alignItems: 'center', justifyContent: 'center' },
+  badge: { marginLeft: 8, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: '#1877F2', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  badgeText: { color: '#fff', fontWeight: '700', lineHeight: 16 },
 });
